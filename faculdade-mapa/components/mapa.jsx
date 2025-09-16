@@ -9,6 +9,11 @@ import {
 } from "react-native-paper";
 import Svg, { Rect } from "react-native-svg";
 
+// Import do LayoutCima
+import LayoutCima from "../components/layoutcima";
+
+
+// Salas e escadas
 const SALAS_C = [
   { x: 500, y: 230, text: "Sala 101-C" },
   { x: 410, y: 230, text: "Sala 102-C" },
@@ -42,7 +47,6 @@ const SALAS_E = [
   { x: 1120, y: 650, text: "Sala 110-E", width: 70, height: 40 },
 ];
 
-// ➕ Escadas e terreo
 const ESCADAS = [
   { x: 600, y: 300, text: "Escada 1", width: 80, height: 90 },
   { x: 1190, y: 490, text: "Escada 2", width: 60, height: 30 },
@@ -87,14 +91,8 @@ const PONTOS_INTERESSE = [
   { x: 1150, y: 345, text: "Banheiro Masculino" },
 ];
 
-function SalaRect({
-  salas,
-  fillColor,
-  strokeColor,
-  defaultWidth = 70,
-  defaultHeight = 70,
-  onPress,
-}) {
+// Componente Sala
+function SalaRect({ salas, fillColor, strokeColor, defaultWidth = 70, defaultHeight = 70, onPress }) {
   return salas.map((sala, index) => {
     const scale = sala.scale || 1;
     const rotate = sala.rotate || 0;
@@ -118,25 +116,34 @@ function SalaRect({
   });
 }
 
-function Pin({ x, y, text, onPress }) {
+// Componente Pin proporcional
+function Pin({ x, y, text, onPress, imageWidth, imageHeight }) {
   return (
     <TouchableOpacity
-      style={{ position: "absolute", left: x, top: y }}
+      style={{
+        position: "absolute",
+        left: (x / 1365) * imageWidth - 20,
+        top: (y / 768) * imageHeight - 40,
+        width: 40,
+        height: 40,
+      }}
       onPress={() => onPress(text)}
     >
       <Image
         source={require("../assets/images/pincoruja.png")}
-        style={styles.pin}
+        style={{ width: "100%", height: "100%" }}
         resizeMode="contain"
       />
     </TouchableOpacity>
   );
 }
 
+// Componente principal
 export default function Mapa() {
   const [visible, setVisible] = useState(false);
   const [infoDialogText, setInfoDialogText] = useState("");
   const [pins, setPins] = useState({});
+  const [imageSize, setImageSize] = useState({ width: 0, height: 0 });
 
   const showDialog = (text) => {
     setInfoDialogText(text);
@@ -155,88 +162,34 @@ export default function Mapa() {
 
   return (
     <PaperProvider>
+      <LayoutCima />
       <View style={styles.container}>
         <ImageBackground
           source={require("../assets/images/mapa.jpg")}
           style={styles.image}
           resizeMode="contain"
+          onLayout={(event) => {
+            const { width, height } = event.nativeEvent.layout;
+            setImageSize({ width, height });
+          }}
         >
           <Svg height="100%" width="100%" viewBox="0 0 1365 768">
-            <SalaRect
-              salas={SALAS_C}
-              fillColor="rgba(173,216,230,0.3)"
-              strokeColor="blue"
-              onPress={showDialog}
-            />
-            <SalaRect
-              salas={SALAS_D}
-              fillColor="rgba(144,238,144,0.3)"
-              strokeColor="green"
-              defaultWidth={80}
-              onPress={showDialog}
-            />
-            <SalaRect
-              salas={SALAS_E}
-              fillColor="rgba(255,165,0,0.3)"
-              strokeColor="orange"
-              onPress={showDialog}
-            />
-            <SalaRect
-              salas={ESCADAS}
-              fillColor="rgba(169,169,169,0.3)"
-              strokeColor="black"
-              onPress={showDialog}
-            />
-            <Rect
-              x="690"
-              y="290"
-              width="200"
-              height="130"
-              fill="rgba(255,215,0,0.3)"
-              stroke="gold"
-              onPress={() =>
-                showDialog("Auditório Amarina Motta\nCapacidade: 300 pessoas")
-              }
-            />
-            <Rect
-              x="760"
-              y="20"
-              width="150"
-              height="50"
-              fill="rgba(138,43,226,0.3)"
-              stroke="purple"
-              onPress={() => showDialog("Biblioteca")}
-            />
-            <Rect
-              x="1290"
-              y="505"
-              width="40"
-              height="20"
-              fill="rgba(255,105,180,0.3)"
-              stroke="deeppink"
-              onPress={() => showDialog("Banheiro Feminino")}
-            />
-            <Rect
-              x="1290"
-              y="485"
-              width="40"
-              height="20"
-              fill="rgba(135,206,250,0.3)"
-              stroke="blue"
-              onPress={() => showDialog("Banheiro Masculino")}
-            />
+            <SalaRect salas={SALAS_C} fillColor="rgba(173,216,230,0.3)" strokeColor="blue" onPress={showDialog} />
+            <SalaRect salas={SALAS_D} fillColor="rgba(144,238,144,0.3)" strokeColor="green" defaultWidth={80} onPress={showDialog} />
+            <SalaRect salas={SALAS_E} fillColor="rgba(255,165,0,0.3)" strokeColor="orange" onPress={showDialog} />
+            <SalaRect salas={ESCADAS} fillColor="rgba(169,169,169,0.3)" strokeColor="black" onPress={showDialog} />
+
+            <Rect x={690} y={290} width={200} height={130} fill="rgba(255,215,0,0.3)" stroke="gold" onPress={() => showDialog("Auditório Amarina Motta\nCapacidade: 300 pessoas")} />
+            <Rect x={760} y={20} width={150} height={50} fill="rgba(138,43,226,0.3)" stroke="purple" onPress={() => showDialog("Biblioteca")} />
+            <Rect x={1290} y={505} width={40} height={20} fill="rgba(255,105,180,0.3)" stroke="deeppink" onPress={() => showDialog("Banheiro Feminino")} />
+            <Rect x={1290} y={485} width={40} height={20} fill="rgba(135,206,250,0.3)" stroke="blue" onPress={() => showDialog("Banheiro Masculino")} />
           </Svg>
-          {PONTOS_INTERESSE.map((ponto, index) => (
-            pins[ponto.text] && (
-              <Pin
-                key={index}
-                x={ponto.x}
-                y={ponto.y}
-                text={ponto.text}
-                onPress={showDialog}
-              />
-            )
-          ))}
+
+          {PONTOS_INTERESSE.map((ponto, index) =>
+            pins[ponto.text] ? (
+              <Pin key={index} x={ponto.x} y={ponto.y} text={ponto.text} onPress={showDialog} imageWidth={imageSize.width} imageHeight={imageSize.height} />
+            ) : null
+          )}
         </ImageBackground>
 
         <Portal>
@@ -260,10 +213,11 @@ export default function Mapa() {
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
+    flex: 1.1,
+    bottom: -150,
   },
   image: {
-    flex: 1,
+    flex: 0.6,
     width: "100%",
     height: "100%",
   },
@@ -272,3 +226,4 @@ const styles = StyleSheet.create({
     height: 40,
   },
 });
+
