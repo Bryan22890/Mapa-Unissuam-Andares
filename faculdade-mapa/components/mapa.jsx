@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ImageBackground, StyleSheet, View } from "react-native";
+import { Image, ImageBackground, StyleSheet, TouchableOpacity, View } from "react-native";
 import {
   Button,
   Dialog,
@@ -34,9 +34,9 @@ const SALAS_E = [
   { x: 1170, y: 325, text: "Sala 102-E", width: 150, height: 40 },
   { x: 1170, y: 410, text: "Sala 103-E" },
   { x: 1280, y: 395, text: "Sala 104-E", width: 50, height: 80 },
-  { x: 1200, y: 510, text: "Sala 105-E",width: 30, rotate: 90, scale: 1.2  },
+  { x: 1200, y: 510, text: "Sala 105-E", width: 30, rotate: 90, scale: 1.2 },
   { x: 1290, y: 530, text: "Sala 106-E", width: 40, height: 60 },
-  { x: 1200, y: 560, text: "Sala 107-E", width: 30, rotate: 90, scale: 1.2 }, // exemplo rotacionada e maior
+  { x: 1200, y: 560, text: "Sala 107-E", width: 30, rotate: 90, scale: 1.2 },
   { x: 1280, y: 600, text: "Sala 108-E", width: 40 },
   { x: 1200, y: 650, text: "Sala 109-E", width: 70, height: 40 },
   { x: 1120, y: 650, text: "Sala 110-E", width: 70, height: 40 },
@@ -51,7 +51,42 @@ const ESCADAS = [
   { x: 1010, y: 405, text: "terreo", width: 130, height: 200 },
 ];
 
-// 🔹 Componente reutilizável atualizado
+const PONTOS_INTERESSE = [
+  { x: 560, y: 160, text: "Sala 101-C" },
+  { x: 490, y: 160, text: "Sala 102-C" },
+  { x: 430, y: 160, text: "Sala 103-C" },
+  { x: 370, y: 160, text: "Sala 104-C" },
+  { x: 300, y: 160, text: "Sala 105-C" },
+  { x: 900, y: 220, text: "Sala 101-D" },
+  { x: 900, y: 300, text: "Sala 102-D" },
+  { x: 900, y: 370, text: "Sala 103-D" },
+  { x: 900, y: 420, text: "Sala 104-D" },
+  { x: 900, y: 490, text: "Sala 105-D" },
+  { x: 780, y: 350, text: "Sala 106-D" },
+  { x: 780, y: 520, text: "Sala 107-D" },
+  { x: 660, y: 420, text: "Sala 108-D" },
+  { x: 570, y: 460, text: "Sala 109-D" },
+  { x: 1023, y: 230, text: "Sala 101-E" },
+  { x: 1110, y: 230, text: "Sala 102-E" },
+  { x: 1110, y: 300, text: "Sala 103-E" },
+  { x: 1160, y: 300, text: "Sala 104-E" },
+  { x: 1110, y: 390, text: "Sala 105-E" },
+  { x: 1160, y: 390, text: "Sala 106-E" },
+  { x: 1110, y: 430, text: "Sala 107-E" },
+  { x: 1160, y: 460, text: "Sala 108-E" },
+  { x: 1090, y: 480, text: "Sala 109-E" },
+  { x: 1040, y: 480, text: "Sala 110-E" },
+  { x: 790, y: 220, text: "Auditório Amarina Motta\nCapacidade: 300 pessoas" },
+  { x: 835, y: 10, text: "Biblioteca" },
+  { x: 640, y: 250, text: "Escada 1" },
+  { x: 1090, y: 360, text: "Escada 2" },
+  { x: 800, y: 470, text: "Escada 3" },
+  { x: 805, y: 70, text: "rampa" },
+  { x: 970, y: 360, text: "terreo" },
+  { x: 1150, y: 365, text: "Banheiro Feminino" },
+  { x: 1150, y: 345, text: "Banheiro Masculino" },
+];
+
 function SalaRect({
   salas,
   fillColor,
@@ -63,13 +98,10 @@ function SalaRect({
   return salas.map((sala, index) => {
     const scale = sala.scale || 1;
     const rotate = sala.rotate || 0;
-
     const w = (sala.width || defaultWidth) * scale;
     const h = (sala.height || defaultHeight) * scale;
-
     const cx = sala.x + w / 2;
     const cy = sala.y + h / 2;
-
     return (
       <Rect
         key={index}
@@ -86,9 +118,25 @@ function SalaRect({
   });
 }
 
+function Pin({ x, y, text, onPress }) {
+  return (
+    <TouchableOpacity
+      style={{ position: "absolute", left: x, top: y }}
+      onPress={() => onPress(text)}
+    >
+      <Image
+        source={require("../assets/images/pincoruja.png")}
+        style={styles.pin}
+        resizeMode="contain"
+      />
+    </TouchableOpacity>
+  );
+}
+
 export default function Mapa() {
   const [visible, setVisible] = useState(false);
   const [infoDialogText, setInfoDialogText] = useState("");
+  const [pins, setPins] = useState({});
 
   const showDialog = (text) => {
     setInfoDialogText(text);
@@ -96,6 +144,14 @@ export default function Mapa() {
   };
 
   const hideDialog = () => setVisible(false);
+
+  const togglePin = (text) => {
+    setPins((prevPins) => ({
+      ...prevPins,
+      [text]: !prevPins[text],
+    }));
+    hideDialog();
+  };
 
   return (
     <PaperProvider>
@@ -106,15 +162,12 @@ export default function Mapa() {
           resizeMode="contain"
         >
           <Svg height="100%" width="100%" viewBox="0 0 1365 768">
-            {/* SALAS C */}
             <SalaRect
               salas={SALAS_C}
               fillColor="rgba(173,216,230,0.3)"
               strokeColor="blue"
               onPress={showDialog}
             />
-
-            {/* SALAS D */}
             <SalaRect
               salas={SALAS_D}
               fillColor="rgba(144,238,144,0.3)"
@@ -122,24 +175,18 @@ export default function Mapa() {
               defaultWidth={80}
               onPress={showDialog}
             />
-
-            {/* SALAS E */}
             <SalaRect
               salas={SALAS_E}
               fillColor="rgba(255,165,0,0.3)"
               strokeColor="orange"
               onPress={showDialog}
             />
-
-            {/* ESCADAS */}
             <SalaRect
               salas={ESCADAS}
               fillColor="rgba(169,169,169,0.3)"
               strokeColor="black"
               onPress={showDialog}
             />
-
-            {/* AUDITÓRIO */}
             <Rect
               x="690"
               y="290"
@@ -151,8 +198,6 @@ export default function Mapa() {
                 showDialog("Auditório Amarina Motta\nCapacidade: 300 pessoas")
               }
             />
-
-            {/* BIBLIOTECA */}
             <Rect
               x="760"
               y="20"
@@ -162,8 +207,6 @@ export default function Mapa() {
               stroke="purple"
               onPress={() => showDialog("Biblioteca")}
             />
-
-            {/* BANHEIROS */}
             <Rect
               x="1290"
               y="505"
@@ -183,6 +226,17 @@ export default function Mapa() {
               onPress={() => showDialog("Banheiro Masculino")}
             />
           </Svg>
+          {PONTOS_INTERESSE.map((ponto, index) => (
+            pins[ponto.text] && (
+              <Pin
+                key={index}
+                x={ponto.x}
+                y={ponto.y}
+                text={ponto.text}
+                onPress={showDialog}
+              />
+            )
+          ))}
         </ImageBackground>
 
         <Portal>
@@ -193,6 +247,9 @@ export default function Mapa() {
             </Dialog.Content>
             <Dialog.Actions>
               <Button onPress={hideDialog}>Fechar</Button>
+              <Button onPress={() => togglePin(infoDialogText)}>
+                {pins[infoDialogText] ? "Remover Bandeira" : "Colocar Bandeira"}
+              </Button>
             </Dialog.Actions>
           </Dialog>
         </Portal>
@@ -210,7 +267,8 @@ const styles = StyleSheet.create({
     width: "100%",
     height: "100%",
   },
+  pin: {
+    width: 40,
+    height: 40,
+  },
 });
-
-
-
